@@ -40,7 +40,7 @@ module Warden
             revocation_method, revocation_path, revocation_body = tuple
             return true if path_info.match(revocation_path) &&
                            method == revocation_method &&
-                           (revocation_body ? body_string_io.string.match(revocation_body) : true)
+                           (revocation_body ? body_string_io.read.match(revocation_body) : true)
           end
           false
         end

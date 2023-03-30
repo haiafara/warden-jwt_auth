@@ -52,7 +52,7 @@ module Warden
           dispatch_method, dispatch_path, dispatch_body = tuple
           return true if path_info.match(dispatch_path) &&
                          method == dispatch_method &&
-                         (dispatch_body ? body_string_io.string.match(dispatch_body) : true)
+                         (dispatch_body ? body_string_io.read.match(dispatch_body) : true)
         end
         false
       end
