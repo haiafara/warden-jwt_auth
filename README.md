@@ -145,7 +145,7 @@ config.dispatch_requests = [
 
 **Important**: You are encouraged to delimit your regular expression with `^` and `$` to avoid unintentional matches.
 
-Tokens will be returned in the `Authorization` response header, with format `Bearer #{token}`.
+Tokens will be returned in the `Authorization` response header (configurable via `config.token_header`), with format `Bearer #{token}`.
 
 There's an optional third element for the array, a regular expression to match something in the request body. This can be used in cases when more than one type of request goes to the same endpoint and use the same HTTP verb, such as when using GraphQL. For example, if you want to allow only requests that contain `signIn` in their body to dispatch tokens, you can use something like:
 
@@ -185,14 +185,14 @@ config.revocation_strategies = { user: RevocationStrategy }
 
 The implementation of the revocation strategy is also on your side. They just need to implement two methods: `jwt_revoked?` and `revoke_jwt`, both of them accepting as parameters the JWT payload and the user record, in this order.
 
-You can read about which [JWT recovation strategies](http://waiting-for-dev.github.io/blog/2017/01/24/jwt_revocation_strategies/) can be implement with their pros and cons.
+You can read about which [JWT recovation strategies](http://waiting-for-dev.github.io/blog/2017/01/24/jwt_revocation_strategies) can be implement with their pros and cons.
 
 ```ruby
 module RevocationStrategy
   def self.jwt_revoked?(payload, user)
     # Does something to check whether the JWT token is revoked for given user
   end
-  
+
   def self.revoke_jwt(payload, user)
     # Does something to revoke the JWT token for given user
   end
@@ -204,6 +204,30 @@ end
 Authentication will be refused if a client requesting to be authenticated through a token is not the same to which it was originally issued. To do so, the content of the header `JWT_AUD` (configurable via `config.aud_header`) is stored as `aud` claim. If you don't want to differentiate between clients, you don't need to provide that header.
 
 **Important:** Be aware that this workflow is not bullet proof. In some scenarios a user can handcraft the request headers, therefore being able to impersonate any client. In such cases you could need something more robust, like an OAuth workflow with client id and client secret.
+
+### Secret rotation
+
+Secret rotation is supported by setting `rotation_secret`. Set the new secret as the `secret` and copy the previous secret to `rotation_secret`
+
+```ruby
+Warden::JWTAuth.configure do |config|
+  config.secret = ENV['WARDEN_JWT_SECRET_KEY']
+  config.rotation_secret = ENV['WARDEN_JWT_SECRET_KEY_ROTATION']
+end
+```
+
+You can remove the `rotation_secret` when you are condifent that large enough user base has the fetched the token encrypted with the new secret.
+
+### Multiple issuers
+
+When your application handles JWT tokens from multiple sources (e.g. webhooks authenticated via provider JTW tokens) you can configure this gem to use the [issuer claim](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.1) to only handle tokens it has issued.
+
+```ruby
+Warden::JWTAuth.configure do |config|
+  config.secret = ENV['WARDEN_JWT_SECRET_KEY']
+  config.issuer = 'http://my-application.com'
+end
+```
 
 ## Development
 

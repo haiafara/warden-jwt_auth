@@ -41,6 +41,9 @@ module Warden
     # The secret used to encode the token
     setting :secret
 
+    # The old secret used for rotation
+    setting :rotation_secret
+
     # The secret used to decode the token, defaults to `secret` if not provided
     setting :decoding_secret, constructor: ->(value) { value || config.secret }
 
@@ -49,6 +52,16 @@ module Warden
 
     # Expiration time for tokens
     setting :expiration_time, default: 3600
+
+    # Request header that will be used for receiving and returning the token.
+    setting :token_header, default: 'Authorization'
+
+    # The issuer claims associated with the tokens
+    #
+    # Will be used to only apply the warden strategy when the issuer matches.
+    # This allows for multiple token issuers being used.
+    # @see https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.1
+    setting :issuer, default: nil
 
     # Request header which value will be encoded as `aud` claim in JWT. If
     # the header is not present `aud` will be `nil`.
