@@ -31,6 +31,7 @@ module Warden
           method = EnvHelper.request_method(env)
           body_string_io = Rack::Request.new(env).body
           return unless token && token_should_be_revoked?(path_info, method, body_string_io)
+
           TokenRevoker.new.call(token)
         end
 
@@ -40,9 +41,16 @@ module Warden
             revocation_method, revocation_path, revocation_body = tuple
             return true if path_info.match(revocation_path) &&
                            method == revocation_method &&
-                           (revocation_body ? body_string_io.read.match(revocation_body) : true)
+                           revocation_body_match(revocation_body, body_string_io)
           end
           false
+        end
+
+        def revocation_body_match(revocation_body, body_string_io)
+          return true unless revocation_body
+
+          body_string_io.rewind
+          body_string_io.read.match(revocation_body)
         end
       end
     end
